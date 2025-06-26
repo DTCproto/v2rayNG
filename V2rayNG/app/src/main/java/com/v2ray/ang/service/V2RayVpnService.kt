@@ -32,14 +32,20 @@ import java.lang.ref.SoftReference
 
 class V2RayVpnService : VpnService(), ServiceControl {
     companion object {
-        private const val VPN_MTU = 1500
+        private const val VPN_MTU = 8500
         private const val PRIVATE_VLAN4_CLIENT = "10.10.14.1"
         private const val PRIVATE_VLAN4_ROUTER = "10.10.14.2"
         private const val PRIVATE_VLAN6_CLIENT = "fc00::10:10:14:1"
         private const val PRIVATE_VLAN6_ROUTER = "fc00::10:10:14:2"
-        private const val TUN2SOCKS = "libtun2socks.so"
-
+        // private const val TUN2SOCKS = "libtun2socks.so"
+        init {
+            System.loadLibrary("hev-socks5-tunnel")
+        }
     }
+
+    private external fun TProxyStartService(configPath: String, fd: Int)
+    private external fun TProxyStopService()
+    private external fun TProxyGetStats(): LongArray
 
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
@@ -149,7 +155,8 @@ class V2RayVpnService : VpnService(), ServiceControl {
             return
         }
 
-        runTun2socks()
+        // runTun2socks()
+        runHevSocks5Tunnel()
     }
 
     /**
@@ -254,9 +261,56 @@ class V2RayVpnService : VpnService(), ServiceControl {
     }
 
     /**
+     * Runs the HevSocks5
+     */
+    private fun runHevSocks5Tunnel() {
+        Log.i(AppConfig.TAG, "Starting hev-socks5-tunnel via JNI")
+
+        val configContent = buildConfig()
+        val configFile = File(applicationContext.filesDir, "hev-socks5-tunnel.yaml").apply {
+            writeText(configContent)
+        }
+        Log.i(AppConfig.TAG, "Config file created: ${configFile.absolutePath}")
+        Log.d(AppConfig.TAG, "Config content:\n$configContent")
+
+        val fd = mInterface.fd
+
+        try {
+            Log.i(AppConfig.TAG, "TProxyStartService...")
+            TProxyStartService(configFile.absolutePath, fd)
+        } catch (e: Exception) {
+            Log.e(AppConfig.TAG, "Tunnel exception: ${e.message}")
+            stopV2Ray()
+        }
+    }
+
+    private fun buildConfig(): String {
+        return buildString {
+            appendLine("tunnel:")
+            appendLine("  name: tun0")
+            appendLine("  mtu: $VPN_MTU")
+            appendLine("  ipv4: $PRIVATE_VLAN4_ROUTER")
+
+            if (MmkvManager.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) == true) {
+                appendLine("  # IPv6 address")
+                appendLine("  ipv6: \"$PRIVATE_VLAN6_ROUTER\"")
+            }
+
+            appendLine("socks5:")
+            appendLine("  port: ${SettingsManager.getSocksPort()}")
+            appendLine("  address: $LOOPBACK")
+            appendLine("  udp: 'udp'")
+
+            appendLine("misc:")
+            appendLine("  log-level: debug")
+        }
+    }
+
+    /**
      * Runs the tun2socks process.
      * Starts the tun2socks process with the appropriate parameters.
      */
+/**
     private fun runTun2socks() {
         Log.i(AppConfig.TAG, "Start run $TUN2SOCKS")
         val socksPort = SettingsManager.getSocksPort()
@@ -304,11 +358,12 @@ class V2RayVpnService : VpnService(), ServiceControl {
             Log.e(AppConfig.TAG, "Failed to start $TUN2SOCKS process", e)
         }
     }
-
+*/
     /**
      * Sends the file descriptor to the tun2socks process.
      * Attempts to send the file descriptor multiple times if necessary.
      */
+/**
     private fun sendFd() {
         val fd = mInterface.fileDescriptor
         val path = File(applicationContext.filesDir, "sock_path").absolutePath
@@ -332,6 +387,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
             }
         }
     }
+*/
 
     /**
      * Stops the V2Ray service.
@@ -352,10 +408,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
 
         try {
-            Log.i(AppConfig.TAG, "$TUN2SOCKS destroy")
-            process.destroy()
+            Log.i(AppConfig.TAG, "TProxyStopService...")
+            TProxyStopService()
         } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to destroy $TUN2SOCKS process", e)
+            Log.e(AppConfig.TAG, "Failed to stop hev-socks5-tunnel", e)
         }
 
         V2RayServiceManager.stopCoreLoop()
