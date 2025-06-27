@@ -38,6 +38,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
         private const val PRIVATE_VLAN6_CLIENT = "fc00::10:10:14:1"
         private const val PRIVATE_VLAN6_ROUTER = "fc00::10:10:14:2"
         // private const val TUN2SOCKS = "libtun2socks.so"
+        private const val MULTI_QUEUE = true
         init {
             System.loadLibrary("hev-socks5-tunnel")
         }
@@ -289,6 +290,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
             appendLine("tunnel:")
             appendLine("  name: tun0")
             appendLine("  mtu: $VPN_MTU")
+            appendLine("  multi-queue: $MULTI_QUEUE")
             appendLine("  ipv4: $PRIVATE_VLAN4_CLIENT")
 
             if (MmkvManager.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) == true) {
