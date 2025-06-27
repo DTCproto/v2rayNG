@@ -77,6 +77,12 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    externalNativeBuild {
+        ndkBuild {
+            path = file("src/main/jni/Android.mk")
+        }
+    }
+
     applicationVariants.all {
         val variant = this
         val isFdroid = variant.productFlavors.any { it.name == "fdroid" }
