@@ -32,7 +32,7 @@ import java.lang.ref.SoftReference
 
 class V2RayVpnService : VpnService(), ServiceControl {
     companion object {
-        private const val VPN_MTU = 8500
+        private const val VPN_MTU = 1500
         private const val PRIVATE_VLAN4_CLIENT = "10.10.14.1"
         private const val PRIVATE_VLAN4_ROUTER = "10.10.14.2"
         private const val PRIVATE_VLAN6_CLIENT = "fc00::10:10:14:1"
@@ -289,20 +289,17 @@ class V2RayVpnService : VpnService(), ServiceControl {
             appendLine("tunnel:")
             appendLine("  name: tun0")
             appendLine("  mtu: $VPN_MTU")
-            appendLine("  ipv4: $PRIVATE_VLAN4_ROUTER")
+            appendLine("  ipv4: $PRIVATE_VLAN4_CLIENT")
 
             if (MmkvManager.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) == true) {
                 appendLine("  # IPv6 address")
-                appendLine("  ipv6: \"$PRIVATE_VLAN6_ROUTER\"")
+                appendLine("  ipv6: \"$PRIVATE_VLAN6_CLIENT\"")
             }
 
             appendLine("socks5:")
             appendLine("  port: ${SettingsManager.getSocksPort()}")
             appendLine("  address: $LOOPBACK")
             appendLine("  udp: 'udp'")
-
-            appendLine("misc:")
-            appendLine("  log-level: debug")
         }
     }
 
