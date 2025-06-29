@@ -32,8 +32,7 @@ import java.lang.ref.SoftReference
 
 class V2RayVpnService : VpnService(), ServiceControl {
     companion object {
-        private const val VPN_MTU = 1500
-        private const val TUN2SOCKS = "libtun2socks.so"
+        private const val VPN_MTU = 8500
         // private const val TUN2SOCKS = "libtun2socks.so"
         private const val MULTI_QUEUE = true
         init {
@@ -47,7 +46,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
 
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
-    private lateinit var process: Process
+    // private lateinit var process: Process
 
     /**destroy
      * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -284,22 +283,26 @@ class V2RayVpnService : VpnService(), ServiceControl {
     }
 
     private fun buildConfig(): String {
+        val vpnConfig = SettingsManager.getCurrentVpnInterfaceAddressConfig()
         return buildString {
             appendLine("tunnel:")
             appendLine("  name: tun0")
             appendLine("  mtu: $VPN_MTU")
             appendLine("  multi-queue: $MULTI_QUEUE")
-            appendLine("  ipv4: $PRIVATE_VLAN4_CLIENT")
+            appendLine("  ipv4: ${vpnConfig.ipv4Client}")
 
             if (MmkvManager.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) == true) {
                 appendLine("  # IPv6 address")
-                appendLine("  ipv6: \"$PRIVATE_VLAN6_CLIENT\"")
+                appendLine("  ipv6: \"${vpnConfig.ipv6Client}\"")
             }
 
             appendLine("socks5:")
             appendLine("  port: ${SettingsManager.getSocksPort()}")
             appendLine("  address: $LOOPBACK")
             appendLine("  udp: 'udp'")
+
+            appendLine("misc:")
+            appendLine("  log-level: info")
         }
     }
 
