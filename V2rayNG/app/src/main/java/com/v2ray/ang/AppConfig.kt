@@ -167,6 +167,10 @@ object AppConfig {
     const val GOOGLEAPIS_CN_DOMAIN = "domain:googleapis.cn"
     const val GOOGLEAPIS_COM_DOMAIN = "googleapis.com"
 
+    // Google API rule constants
+    const val GSTATIC_CN_DOMAIN = "domain:gstatic.cn"
+    const val GSTATIC_COM_DOMAIN = "gstatic.com"
+
     // Android Private DNS constants
     const val DNS_DNSPOD_DOMAIN = "dot.pub"
     const val DNS_ALIDNS_DOMAIN = "dns.alidns.com"

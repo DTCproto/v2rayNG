@@ -489,6 +489,7 @@ object V2rayConfigManager {
 
             // hardcode googleapi rule to fix play store problems
             hosts[AppConfig.GOOGLEAPIS_CN_DOMAIN] = AppConfig.GOOGLEAPIS_COM_DOMAIN
+            hosts[AppConfig.GSTATIC_CN_DOMAIN] = AppConfig.GSTATIC_COM_DOMAIN
 
             // hardcode popular Android Private DNS rule to fix localhost DNS problem
             hosts[AppConfig.DNS_ALIDNS_DOMAIN] = AppConfig.DNS_ALIDNS_ADDRESSES
