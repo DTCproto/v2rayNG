@@ -33,20 +33,25 @@ import java.lang.ref.SoftReference
 class V2RayVpnService : VpnService(), ServiceControl {
     companion object {
         private const val VPN_MTU = 8500
-        // private const val TUN2SOCKS = "libtun2socks.so"
+        private const val TUN2SOCKS = "libtun2socks.so"
         private const val MULTI_QUEUE = true
+
         init {
             System.loadLibrary("hev-socks5-tunnel")
         }
+        // 参阅：hev-socks5-tunnel\src\hev-jni.c | static JNINativeMethod native_methods[]
+        @JvmStatic
+        private external fun TProxyStartService(configPath: String, fd: Int)
+        @JvmStatic
+        private external fun TProxyStopService()
+        @JvmStatic
+        @Suppress("UNUSED")
+        private external fun TProxyGetStats(): LongArray
     }
-
-    private external fun TProxyStartService(configPath: String, fd: Int)
-    private external fun TProxyStopService()
-    private external fun TProxyGetStats(): LongArray
 
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
-    // private lateinit var process: Process
+    private lateinit var process: Process
 
     /**destroy
      * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -255,10 +260,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
         val fd = mInterface.fd
 
         try {
-            Log.i(AppConfig.TAG, "TProxyStartService...")
+            Log.i(AppConfig.TAG, "Tun Service start...")
             TProxyStartService(configFile.absolutePath, fd)
         } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Tunnel exception: ${e.message}")
+            Log.e(AppConfig.TAG, "Tun Service start exception: ${e.message}")
             stopV2Ray()
         }
     }
@@ -435,10 +440,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
 
         try {
-            Log.i(AppConfig.TAG, "TProxyStopService...")
+            Log.i(AppConfig.TAG, "Tun Service stop...")
             TProxyStopService()
         } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to stop hev-socks5-tunnel", e)
+            Log.e(AppConfig.TAG, "Failed to stop Tun Service", e)
         }
 
         V2RayServiceManager.stopCoreLoop()
