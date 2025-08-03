@@ -30,7 +30,7 @@ import java.lang.ref.SoftReference
 class V2RayVpnService : VpnService(), ServiceControl {
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
-    private var tun2SocksService: Tun2SocksService? = null
+    private var tun2SocksService: HevTun2SocksService? = null
 
     /**destroy
      * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -296,11 +296,12 @@ class V2RayVpnService : VpnService(), ServiceControl {
      * Starts the tun2socks process with the appropriate parameters.
      */
     private fun runTun2socks() {
-        tun2SocksService = Tun2SocksService(
+        tun2SocksService = HevTun2SocksService(
             context = applicationContext,
             vpnInterface = mInterface,
             isRunningProvider = { isRunning },
-            restartCallback = { runTun2socks() }
+            restartCallback = { runTun2socks() },
+            stopCallback = { stopV2Ray() }
         ).also {
             it.startTun2Socks()
         }

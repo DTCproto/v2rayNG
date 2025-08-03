@@ -165,6 +165,9 @@ object AppConfig {
     const val VPN = "VPN"
     const val VPN_MTU = 1500
 
+    const val HEV_TUN_VPN_MTU = 8500
+    const val HEV_TUN_MULTI_QUEUE = true
+
     // Google API rule constants
     const val GOOGLEAPIS_CN_DOMAIN = "domain:googleapis.cn"
     const val GOOGLEAPIS_COM_DOMAIN = "googleapis.com"
