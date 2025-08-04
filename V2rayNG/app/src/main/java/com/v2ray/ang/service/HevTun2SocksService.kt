@@ -26,7 +26,9 @@ class HevTun2SocksService(
             System.loadLibrary("hev-socks5-tunnel")
         }
 
-        // 参阅：hev-socks5-tunnel\src\hev-jni.c | static JNINativeMethod native_methods[]
+        // 参阅：
+        // hev-socks5-tunnel\src\hev-jni.c | static JNINativeMethod native_methods[]
+        // jni/Application.mk | APP_CFLAGS := -O3 -DPKGNAME=com/v2ray/ang/service -DCLSNAME=HevTun2SocksService
         @Keep
         @JvmStatic
         private external fun TProxyStartService(configPath: String, fd: Int)
@@ -87,13 +89,15 @@ class HevTun2SocksService(
             appendLine("  address: ${AppConfig.LOOPBACK}")
             appendLine("  udp: 'udp'")
 
-            MmkvManager.decodeSettingsString(AppConfig.PREF_LOGLEVEL)?.let { logPref ->
-                if (logPref != "none") {
-                    val logLevel = if (logPref == "warning") "warn" else logPref
-                    appendLine("misc:")
-                    appendLine("  log-level: $logLevel")
-                }
+            appendLine("misc:")
+            val logPref = MmkvManager.decodeSettingsString(AppConfig.PREF_LOGLEVEL)
+            val logLevel = when (logPref) {
+                "none" -> "error"
+                "warning" -> "warn"
+                null, "" -> "error" // 空值或未设置默认 error
+                else -> logPref
             }
+            appendLine("  log-level: $logLevel")
         }
     }
 
